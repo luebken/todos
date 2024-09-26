@@ -23,8 +23,10 @@ RUN apk add --no-cache ca-certificates
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /go/app/todos ./
-#COPY ./template ./template
-#COPY ./static ./static
+COPY ./views ./views
+COPY ./public ./public
+
+EXPOSE 3000
 
 # Run the web service on container startup.
 ENTRYPOINT ["/todos"]
