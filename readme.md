@@ -7,14 +7,18 @@ The goal is to demonstrate multi-cloud scenarios where the web-app app and the d
 
 ```mermaid
 flowchart TD
-    TODOs(TODOs<br>Demo App) --- Webapp(WebApp<br>Golang)
-    TODOs --- Database(Database<br>Postgres)
-    Webapp --> K8s
-    K8s --> AWS 
-    K8s --> Azure 
-    K8s --> GCP
-    Database --> K8s2[K8s]
-    Database --> Cloud[Cloud<br>AWS/Azure/GCP]
+    TODOs((TODOs<br>Demo App)) --- Golang(Golang)
+    TODOs --- Postgres[(Postgres)]
+    subgraph WebApp
+        Golang --> K8s
+        K8s --> AWS 
+        K8s --> Azure 
+        K8s --> GCP    
+    end
+    subgraph Database
+        Postgres --> K8s2[K8s]
+        Postgres --> Cloud[Cloud<br>AWS/Azure/GCP]
+    end
 ```
 
 # Getting started
