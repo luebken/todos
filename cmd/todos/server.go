@@ -16,8 +16,12 @@ import (
 func main() {
 
 	// Database
-	connStr := "postgresql://postgres:mysecretpassword@localhost/todos?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		log.Fatalf("Environment variable DATABASE_URL is not set. Aborting.")
+	}
+
+	db, err := sql.Open("postgres", databaseUrl)
 	if err != nil {
 		log.Fatal(err)
 	}

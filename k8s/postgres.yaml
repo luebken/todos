@@ -2,15 +2,17 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: postgres-secret
+  namespace: todos
 type: Opaque
 data:
-  # Encode your credentials in base64, e.g., echo -n 'mysecretpassword' | base64
-  POSTGRES_PASSWORD: bXlzZWNyZXRwYXNzd29yZA== # Replace with your base64 encoded password
+  # Encode your credentials in base64, e.g., echo -n 'mysecretpass_1' | base64
+  POSTGRES_PASSWORD: bXlzZWNyZXRwYXNzXzE=
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
+  namespace: todos
 spec:
   replicas: 1
   selector:
@@ -47,6 +49,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  namespace: todos
 spec:
   type: ClusterIP
   ports:

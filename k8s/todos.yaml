@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todos
+  namespace: todos
 spec:
   replicas: 2
   selector:
@@ -20,12 +21,13 @@ spec:
             - containerPort: 3000
           env:
             - name: DATABASE_URL
-              value: postgresql://postgres:mysecretpassword@postgres/todos?sslmode=disable
+              value: postgresql://postgres:mysecretpass_1@postgres/todos?sslmode=disable
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: todos
+  namespace: todos
 spec:
   type: LoadBalancer
   ports:
