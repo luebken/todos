@@ -48,6 +48,9 @@ open http://localhost:3000
 ## Troubleshooting
 
 ```sh
+# watch
+watch --color kubecolor get pods -o wide -n todos  --force-colors
+
 # logs
 kubectl logs -f -l app=todos -n todos --all-containers=true
 
