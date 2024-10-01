@@ -40,9 +40,15 @@ SELECT * FROM todos;
 
 # start application
 kubectl apply -f k8s/todos.yaml
-kubectl port-forward -n todos service/todos 3000:3000
 
+# make it available locally:
+kubectl port-forward -n todos service/todos 3000:3000
 open http://localhost:3000
+
+# make it available publicly:
+# get the clusters hostname and add it to ingress.yaml
+kubectl apply -f k8s/ingress.yaml
+open <hostname>
 ```
 
 ## Troubleshooting

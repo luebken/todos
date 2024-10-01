@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: todos
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: hostname-cl-4c46-9cdf-d023f26fa625.eu.k8s.emma.ms
+    http:
+      paths:
+      - backend:
+          service:
+            name: todos
+            port:
+              number: 3000
+        path: /
+        pathType: Prefix
