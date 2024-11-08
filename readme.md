@@ -28,20 +28,25 @@ flowchart TD
 Prerequisite: A Kubernetes cluster. e.g. [emma's Managed Multi-Cloud Kubernetes](https://docs.emma.ms/project-services/managed-kubernetes-service/)
 
 ```sh
-# setup database
+# work in todos namespace
+kubectl create ns todos
+kubectl config set-context --current --namespace=todos
+
+
+# setup a simple database
 kubectl apply -f k8s/postgres.yaml
 kubectl port-forward -n todos service/postgres 5432:5432
 psql -h localhost -U postgres todos
+# dummy data
 CREATE TABLE todos (item TEXT PRIMARY KEY);
 INSERT INTO todos (item) VALUES ('Buy groceries'), ('Finish homework'), ('Clean the house');
 SELECT * FROM todos;
 
 # change / build application see Makefile
+make push
 
 # start application
 kubectl apply -f k8s/todos.yaml
-
-# make it available locally:
 kubectl port-forward -n todos service/todos 3000:3000
 open http://localhost:3000
 
