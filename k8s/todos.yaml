@@ -21,7 +21,9 @@ spec:
             - containerPort: 3000
           env:
             - name: DATABASE_URL
-              value: postgresql://postgres:mysecretpass_1@postgres/todos?sslmode=disable
+              value: postgresql://postgres:mysecretpass_1@todos2.c7sqmiwamy4g.eu-west-2.rds.amazonaws.com/todos
+      nodeSelector:
+        cloud-provider: aws
 ---
 apiVersion: v1
 kind: Service
@@ -29,7 +31,7 @@ metadata:
   name: todos
   namespace: todos
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 3000
       targetPort: 3000
