@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-
 	// Database
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
@@ -107,14 +106,21 @@ func putHandler(c *fiber.Ctx, db *sql.DB) error {
 
 	olditem := c.Query("olditem")
 	newitem := c.Query("newitem")
-	db.Exec("UPDATE todos SET item=$1 WHERE item=$2", newitem, olditem)
-	return c.Redirect("/")
+	log.Printf("Old item: %v, New item: %v", olditem, newitem)
+	_, err := db.Exec("UPDATE todos SET item=$1 WHERE item=$2", newitem, olditem)
+	if err != nil {
+		log.Fatalf("An error occurred while executing query: %v", err)
+	}
+	return c.Status(fiber.StatusOK).SendString("Item updated")
 }
 
 func deleteHandler(c *fiber.Ctx, db *sql.DB) error {
 	log.Println("delete")
 
 	todoToDelete := c.Query("item")
-	db.Exec("DELETE from todos WHERE item=$1", todoToDelete)
+	_, err := db.Exec("DELETE from todos WHERE item=$1", todoToDelete)
+	if err != nil {
+		log.Fatalf("An error occurred while executing query: %v", err)
+	}
 	return c.SendString("deleted")
 }
