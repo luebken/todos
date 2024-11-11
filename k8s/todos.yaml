@@ -5,7 +5,7 @@ metadata:
   name: todos
   namespace: todos
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: todos
@@ -17,6 +17,7 @@ spec:
       containers:
         - name: webapp
           image: luebken/todos:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:

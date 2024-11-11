@@ -9,6 +9,7 @@ run:
 
 push: build
 	docker push luebken/todos:latest
+	kubectl delete pods -l app=todos
 
 run-postgres:
 	docker run -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword postgres
