@@ -9,15 +9,18 @@ The goal is to demonstrate multi-cloud scenarios where the web-app app and the d
 flowchart TD
     TODOs((TODOs<br>Demo App)) --- Golang(Golang)
     TODOs --- Postgres[(Postgres)]
+    TODOs --- Kafka[(Kafka)]
+    subgraph Services
+        Postgres --> K8s2[K8s]
+        Postgres --> Cloud[Cloud<br>AWS/Azure/GCP]
+        Kafka --> K8s2[K8s]
+        Kafka --> Cloud[Cloud<br>AWS/Azure/GCP]
+    end
     subgraph WebApp
         Golang --> K8s
         K8s --> AWS 
         K8s --> Azure 
         K8s --> GCP    
-    end
-    subgraph Database
-        Postgres --> K8s2[K8s]
-        Postgres --> Cloud[Cloud<br>AWS/Azure/GCP]
     end
 ```
 
@@ -29,9 +32,7 @@ Prerequisite: A Kubernetes cluster. e.g. [emma's Managed Multi-Cloud Kubernetes]
 
 ```sh
 # work in todos namespace
-kubectl create ns todos
-kubectl config set-context --current --namespace=todos
-
+kubectl create ns todos; kubectl config set-context --current --namespace=todos
 
 # setup a simple database
 kubectl apply -f k8s/postgres.yaml
@@ -43,7 +44,13 @@ CREATE TABLE todos (
     username TEXT
 );
 INSERT INTO todos (item, username) VALUES ('Buy groceries', 'Matthias'), ('Finish homework', 'Matthias'), ('Clean the house', 'Matthias');
-SELECT * FROM todos;
+
+# setup a simple kafka
+kubectl apply -f k8s/kafka.yaml
+# create topic
+kubectl run kafka-client --rm -it --image=apache/kafka -- bash
+cd /opt/kafka/bin/
+./kafka-topics.sh --bootstrap-server kafka:9092 --create --topic todos-topic
 
 # Build application. See Makefile.
 # Change the Docker user
@@ -76,6 +83,10 @@ nc -zv postgres 5432
 # psql
 kubectl run psql-client --rm -it --image=postgres -- bash
 psql -h postgres -U postgres 
+
+# kafka
+./kafka-console-producer.sh --bootstrap-server kafka:9092 --topic todos-topic
+./kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic todos-topic --from-beginning
 ```
 
 # Notes

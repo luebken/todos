@@ -2,12 +2,17 @@ module github.com/luebken/todos
 
 go 1.22
 
-require github.com/gofiber/fiber/v2 v2.52.5
+require (
+	github.com/gofiber/fiber/v2 v2.52.5
+	github.com/gofiber/template/html/v2 v2.1.2
+	github.com/segmentio/kafka-go v0.4.27
+)
 
 require (
 	github.com/gofiber/template v1.8.3 // indirect
-	github.com/gofiber/template/html/v2 v2.1.2 // indirect
 	github.com/gofiber/utils v1.1.0 // indirect
+	github.com/golang/snappy v0.0.1 // indirect
+	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 )
 
 require (

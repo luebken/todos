@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function removeFromDb(item){
-        fetch(`/delete?item=${item}`, {method: "DELETE"}).then(res =>{
+        fetch(`/delete?username=${username}&item=${item}`, {method: "DELETE"}).then(res =>{
             if (res.status == 200){
                 const username = sessionStorage.getItem('username');
                 loadTodos(username);
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateDb(item) {
         let input = document.getElementById(item)
         let newitem = input.value
-        fetch(`/update?olditem=${item}&newitem=${newitem}`, {method: "PUT"}).then(res =>{
+        fetch(`/update?username=${username}&olditem=${item}&newitem=${newitem}`, {method: "PUT"}).then(res =>{
             if (res.status == 200){
                 const username = sessionStorage.getItem('username');
                 loadTodos(username);
