@@ -38,11 +38,15 @@ kubectl apply -f k8s/postgres.yaml
 kubectl port-forward -n todos service/postgres 5432:5432
 psql -h localhost -U postgres todos
 # dummy data
-CREATE TABLE todos (item TEXT PRIMARY KEY);
-INSERT INTO todos (item) VALUES ('Buy groceries'), ('Finish homework'), ('Clean the house');
+CREATE TABLE todos (
+    item TEXT PRIMARY KEY,
+    username TEXT
+);
+INSERT INTO todos (item, username) VALUES ('Buy groceries', 'Matthias'), ('Finish homework', 'Matthias'), ('Clean the house', 'Matthias');
 SELECT * FROM todos;
 
-# change / build application see Makefile
+# Build application. See Makefile.
+# Change the Docker user
 make push
 
 # start application

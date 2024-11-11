@@ -55,25 +55,32 @@ func main() {
 
 func indexHandler(c *fiber.Ctx, db *sql.DB) error {
 	log.Println("get")
-	var res string
-	var todos []string
-	rows, err := db.Query("SELECT * FROM todos")
-	if err != nil {
-		log.Fatalln(err)
-		c.JSON("An error occured")
+	username := c.Query("username")
+
+	var item string
+	var todos []todo
+
+	if username != "" {
+		rows, err := db.Query("SELECT item FROM todos WHERE username=$1", username)
+		if err != nil {
+			log.Fatalln(err)
+			return c.JSON("An error occurred")
+		}
+		defer rows.Close()
+		for rows.Next() {
+			rows.Scan(&item)
+			todos = append(todos, todo{Item: item, Username: username})
+		}
 	}
-	defer rows.Close()
-	for rows.Next() {
-		rows.Scan(&res)
-		todos = append(todos, res)
-	}
+
 	return c.Render("index", fiber.Map{
 		"Todos": todos,
 	})
 }
 
 type todo struct {
-	Item string
+	Item     string
+	Username string
 }
 
 func postHandler(c *fiber.Ctx, db *sql.DB) error {
@@ -84,9 +91,9 @@ func postHandler(c *fiber.Ctx, db *sql.DB) error {
 		log.Printf("An error occured: %v", err)
 		return c.SendString(err.Error())
 	}
-	fmt.Printf("%v", newTodo)
-	if newTodo.Item != "" {
-		_, err := db.Exec("INSERT into todos VALUES ($1)", newTodo.Item)
+	log.Printf("%v", newTodo)
+	if newTodo.Item != "" && newTodo.Username != "" {
+		_, err := db.Exec("INSERT into todos (item, username) VALUES ($1, $2)", newTodo.Item, newTodo.Username)
 		if err != nil {
 			log.Fatalf("An error occured while executing query: %v", err)
 		}

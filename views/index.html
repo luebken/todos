@@ -9,11 +9,26 @@
    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,400;1,600;1,700;1,800&amp;display=swap"/>
    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.standalone.min.css"/>
-
-
    <title>TODOs</title>
 </head>
 <body>
+   <!-- Username Modal -->
+   <div class="modal" id="usernameModal" tabindex="-1" role="dialog">
+       <div class="modal-dialog" role="document">
+           <div class="modal-content">
+               <div class="modal-header">
+                   <h5 class="modal-title">Enter Username</h5>
+               </div>
+               <div class="modal-body">
+                   <input id="username" class="form-control" type="text" placeholder="Username">
+               </div>
+               <div class="modal-footer">
+                   <button type="button" class="btn btn-primary" id="save-username">Save</button>
+               </div>
+           </div>
+       </div>
+   </div>
+
    <div class="container m-5 p-2 rounded mx-auto bg-light shadow">
        <!-- App title section -->
        <div class="row m-1 p-4">
@@ -22,12 +37,15 @@
                    <i class="fa fa-check bg-primary text-white rounded p-2"></i>
                    <u>Todo List</u>
                </div>
+               <div class="p-1 h5 text-secondary text-center mx-auto display-inline-block" id="username-display">
+                   <!-- Username will be displayed here -->
+               </div>
            </div>
        </div>
        <!-- Create todo section -->
        <div class="row m-1 p-3">
            <div class="col col-11 mx-auto">
-               <form action="/" method="POST" class="row bg-white rounded shadow-sm p-2 add-todo-wrapper align-items-center justify-content-center">
+               <form id="todo-form" class="row bg-white rounded shadow-sm p-2 add-todo-wrapper align-items-center justify-content-center">
                    <div class="col">
                        <input name="Item" class="form-control form-control-lg border-0 add-todo-input bg-transparent rounded" type="text" placeholder="Add new ..">
                    </div>
@@ -39,24 +57,25 @@
        </div>
        <div class="p-2 m-2 mx-4 border-black-25 border-bottom"></div>
        <!-- Todo list section -->
-       <div class="row mx-1 px-5 pb-3 w-80">
+       <div class="row mx-1 px-5 pb-3 w-80 todo-list-section">
            <div class="col mx-auto">
                <!-- Todo Item-->
                {{range .Todos}}
                <div class="row px-3 align-items-center todo-item editing rounded">
                    <div class="col px-1 m-1 d-flex align-items-center">
-                       <input type="text" class="form-control form-control-lg border-0 edit-todo-input bg-transparent rounded px-3 d-none" readonly value="{{.}}" title="{{.}}" />
-                       <input  id="{{.}}"  type="text" class="form-control form-control-lg border-0 edit-todo-input rounded px-3" value="{{.}}" />
+                       <input type="text" class="form-control form-control-lg border-0 edit-todo-input bg-transparent rounded px-3 d-none" readonly value="{{.Item}}" title="{{.Item}}" />
+                       <input  id="{{.Item}}"  type="text" class="form-control form-control-lg border-0 edit-todo-input rounded px-3" value="{{.Item}}" />
+                       <input type="text" class="form-control form-control-lg border-0 edit-todo-input bg-transparent rounded px-3 d-none" readonly value="{{.Username}}" title="{{.Username}}" />
                    </div>
                    <div class="col-auto m-1 p-0 px-3 d-none">
                    </div>
                    <div class="col-auto m-1 p-0 todo-actions">
                        <div class="row d-flex align-items-center justify-content-end">
                            <h5 class="m-0 p-0 px-2">
-                               <i onclick="updateDb('{{.}}')" class="fa fa-pencil text-warning btn m-0 p-0" data-toggle="tooltip" data-placement="bottom" title="Edit todo"></i>
+                               <i class="fa fa-pencil text-warning btn m-0 p-0" data-item="{{.Item}}" data-toggle="tooltip" data-placement="bottom" title="Edit todo"></i>
                            </h5>
                            <h5 class="m-0 p-0 px-2">
-                               <i onclick="removeFromDb('{{.}}')" class="fa fa-trash-o text-danger btn m-0 p-0" data-toggle="tooltip" data-placement="bottom" title="Delete todo"></i>
+                               <i class="fa fa-trash-o text-danger btn m-0 p-0" data-item="{{.Item}}" data-toggle="tooltip" data-placement="bottom" title="Delete todo"></i>
                            </h5>
                        </div>
                    </div>
@@ -65,7 +84,6 @@
            </div>
        </div>
    </div>
-   </form>
    <script src="index.js"></script>
    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
