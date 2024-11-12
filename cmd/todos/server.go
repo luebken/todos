@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/gofiber/template/html/v2"
 	"github.com/gofiber/websocket/v2"
+
+	"github.com/gofiber/template/html/v2"
 	"github.com/segmentio/kafka-go"
 
 	_ "github.com/lib/pq"
@@ -140,7 +143,31 @@ func main() {
 	if port == "" {
 		port = "3000"
 	}
-	log.Fatalln(app.Listen(fmt.Sprintf(":%v", port)))
+
+	// Create channel for shutdown signals
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	// Start server in a goroutine
+	go func() {
+		if err := app.Listen(fmt.Sprintf(":%v", port)); err != nil {
+			log.Printf("[ERROR] Server error: %v", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-quit
+	log.Println("[INFO] Shutting down server...")
+
+	// Give outstanding requests 5 seconds to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := app.ShutdownWithContext(ctx); err != nil {
+		log.Printf("[ERROR] Server forced to shutdown: %v", err)
+	}
+
+	log.Println("[INFO] Server exiting")
 }
 
 func indexHandler(c *fiber.Ctx, db *sql.DB, kafkaWriter *kafka.Writer) error {
