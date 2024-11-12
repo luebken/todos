@@ -112,4 +112,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     attachEventListeners();
+
+    // Add logout functionality
+    document.getElementById('logout-button').addEventListener('click', function() {
+        sessionStorage.clear();
+        window.location.reload();
+    });
 });
