@@ -85,6 +85,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 removeFromDb(item);
             });
         });
+
+        document.querySelectorAll('.edit-todo-input').forEach(input => {
+            input.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const item = this.getAttribute('id');
+                    updateDb(item);
+                }
+            });
+        });
     }
 
     function removeFromDb(item){
@@ -117,5 +127,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('logout-button').addEventListener('click', function() {
         sessionStorage.clear();
         window.location.reload();
+    });
+
+    // Add keyboard support for username modal
+    document.getElementById('username').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            document.getElementById('save-username').click();
+        }
     });
 });
