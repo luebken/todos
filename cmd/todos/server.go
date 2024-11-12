@@ -17,6 +17,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Add a helper function for Kafka connectivity check
+func checkKafkaConnection(writer *kafka.Writer) error {
+	// Try to write a test message
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := writer.WriteMessages(ctx, kafka.Message{
+		Key:   []byte("health-check"),
+		Value: []byte("ping"),
+	})
+	return err
+}
+
 func main() {
 	// Database
 	databaseUrl := os.Getenv("DATABASE_URL")
@@ -44,6 +57,27 @@ func main() {
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
+
+	// Health check endpoints
+	app.Get("/health/live", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+	app.Get("/health/ready", func(c *fiber.Ctx) error {
+		// Check database connection
+		if err := db.PingContext(context.Background()); err != nil {
+			log.Printf("Database health check failed: %v", err)
+			return c.SendStatus(fiber.StatusServiceUnavailable)
+		}
+
+		// Check Kafka connection
+		if err := checkKafkaConnection(kafkaWriter); err != nil {
+			log.Printf("Kafka health check failed: %v", err)
+			return c.SendStatus(fiber.StatusServiceUnavailable)
+		}
+
+		return c.SendStatus(fiber.StatusOK)
+	})
+
 	// websocket middleware
 	app.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
