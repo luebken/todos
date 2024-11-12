@@ -39,12 +39,14 @@ func main() {
 	// Database
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
-		log.Fatal("[ERROR] Environment variable DATABASE_URL is not set")
+		log.Printf("[ERROR] Environment variable DATABASE_URL is not set")
+		os.Exit(1)
 	}
 
 	db, err := sql.Open("postgres", databaseUrl)
 	if err != nil {
-		log.Fatal("[ERROR] Database connection failed: ", err)
+		log.Printf("[ERROR] Database connection failed: %v", err)
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -60,6 +62,14 @@ func main() {
 	engine := html.New("./views", ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			log.Printf("[ERROR] Request failed: %v", err)
+			code := fiber.StatusInternalServerError
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+			return c.Status(code).JSON(err.Error())
+		},
 	})
 
 	// Add request logging middleware
@@ -143,21 +153,31 @@ func indexHandler(c *fiber.Ctx, db *sql.DB, kafkaWriter *kafka.Writer) error {
 	if username != "" {
 		rows, err := db.Query("SELECT item FROM todos WHERE username=$1", username)
 		if err != nil {
-			log.Fatalln(err)
-			return c.JSON("An error occurred")
+			log.Printf("[ERROR] Database query failed: %v", err)
+			return fmt.Errorf("failed to fetch todos: %w", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
-			rows.Scan(&item)
+			if err := rows.Scan(&item); err != nil {
+				log.Printf("[ERROR] Row scan failed: %v", err)
+				continue
+			}
 			todos = append(todos, todo{Item: item, Username: username})
+		}
+		if err := rows.Err(); err != nil {
+			log.Printf("[ERROR] Row iteration failed: %v", err)
+			return fmt.Errorf("failed to process todos: %w", err)
 		}
 	}
 
-	// Send log to Kafka
-	kafkaWriter.WriteMessages(c.Context(), kafka.Message{
+	// Send log to Kafka with error handling
+	if err := kafkaWriter.WriteMessages(c.Context(), kafka.Message{
 		Key:   []byte("get"),
 		Value: []byte(fmt.Sprintf("User %s fetched todos at %s", username, time.Now().Format(time.RFC3339))),
-	})
+	}); err != nil {
+		log.Printf("[ERROR] Failed to write to Kafka: %v", err)
+		// Continue execution as this is not critical
+	}
 
 	return c.Render("index", fiber.Map{
 		"Todos": todos,
