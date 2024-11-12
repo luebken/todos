@@ -9,10 +9,13 @@ require (
 )
 
 require (
+	github.com/fasthttp/websocket v1.5.3 // indirect
 	github.com/gofiber/template v1.8.3 // indirect
 	github.com/gofiber/utils v1.1.0 // indirect
+	github.com/gofiber/websocket/v2 v2.2.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
+	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 )
 
 require (

@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"time"
 
 	"github.com/gofiber/template/html/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/segmentio/kafka-go"
 
 	_ "github.com/lib/pq"
@@ -44,8 +44,16 @@ func main() {
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
+	// websocket middleware
+	app.Use("/ws", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
 
 	// routes
+	app.Static("/", "./public")
 	app.Get("/", func(c *fiber.Ctx) error {
 		return indexHandler(c, db, kafkaWriter)
 	})
@@ -61,7 +69,7 @@ func main() {
 	app.Get("/logs", func(c *fiber.Ctx) error {
 		return logsHandler(c)
 	})
-	app.Static("/", "./public")
+	app.Get("/ws/logs", websocket.New(logsWebSocketHandler))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -172,10 +180,13 @@ func deleteHandler(c *fiber.Ctx, db *sql.DB, kafkaWriter *kafka.Writer) error {
 	return c.SendString("deleted")
 }
 
-// TODO change to streaming logs to the ui
+// Update the logsHandler to serve the logs page instead
 func logsHandler(c *fiber.Ctx) error {
-	log.Println("logs")
+	return c.Render("logs", fiber.Map{})
+}
 
+// handleLogsWebSocket handles the WebSocket connection for streaming logs
+func logsWebSocketHandler(c *websocket.Conn) {
 	// Create reader with latest offset
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{"kafka:9092"},
@@ -184,34 +195,19 @@ func logsHandler(c *fiber.Ctx) error {
 	})
 	defer r.Close()
 
-	// Create timeout context
-	ctx, cancel := context.WithTimeout(c.Context(), 5*time.Second)
-	defer cancel()
-
-	messages := make([]string, 0, 20)
-
-	// Read messages with timeout
-	for i := 0; i < 20; i++ {
-		m, err := r.ReadMessage(ctx)
+	for {
+		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			if err == context.DeadlineExceeded {
-				log.Println("timeout reached")
-				break
-			}
-			if err == io.EOF {
-				log.Println("no more messages")
-				break
-			}
-			log.Printf("error reading message: %v", err)
-			return fiber.NewError(fiber.StatusInternalServerError, "Failed to read messages")
+			log.Printf("Error reading message: %v", err)
+			break
 		}
-		messages = append(messages, string(m.Value))
-	}
 
-	// Return empty array if no messages
-	if len(messages) == 0 {
-		return c.JSON([]string{})
+		if err := c.WriteJSON(fiber.Map{
+			"message": string(m.Value),
+			"time":    time.Now().Format(time.RFC3339),
+		}); err != nil {
+			log.Printf("Error writing to websocket: %v", err)
+			break
+		}
 	}
-
-	return c.JSON(messages)
 }

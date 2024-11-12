@@ -34,3 +34,19 @@ body {
 .todo-item.editing .todo-actions .edit-icon {
     display: none !important;
 }
+
+/* Log styles */
+.log-container {
+    height: 600px;
+    overflow-y: auto;
+}
+
+.log-entry {
+    border-bottom: 1px solid #eee;
+    padding: 10px;
+}
+
+.log-time {
+    color: #666;
+    font-size: 0.9em;
+}
