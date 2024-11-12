@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }).then(res => {
             console.log('Response:', res);
             if (res.status == 200) {
+                itemInput.value = '';
                 loadTodos(username);
             }
         }).catch(err => {
