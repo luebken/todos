@@ -17,6 +17,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func init() {
+	// Configure standard logger with timestamp and file info
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+}
+
 // Add a helper function for Kafka connectivity check
 func checkKafkaConnection(writer *kafka.Writer) error {
 	// Try to write a test message
@@ -34,14 +39,13 @@ func main() {
 	// Database
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
-		log.Fatalf("Environment variable DATABASE_URL is not set. Aborting.")
+		log.Fatal("[ERROR] Environment variable DATABASE_URL is not set")
 	}
 
 	db, err := sql.Open("postgres", databaseUrl)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("[ERROR] Database connection failed: ", err)
 	}
-
 	defer db.Close()
 
 	// Kafka
@@ -58,6 +62,22 @@ func main() {
 		Views: engine,
 	})
 
+	// Add request logging middleware
+	app.Use(func(c *fiber.Ctx) error {
+		start := time.Now()
+		err := c.Next()
+		duration := time.Since(start)
+
+		log.Printf("[INFO] %s %s - Status: %d - Duration: %v - IP: %s",
+			c.Method(),
+			c.Path(),
+			c.Response().StatusCode(),
+			duration,
+			c.IP(),
+		)
+		return err
+	})
+
 	// Health check endpoints
 	app.Get("/health/live", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
@@ -65,16 +85,17 @@ func main() {
 	app.Get("/health/ready", func(c *fiber.Ctx) error {
 		// Check database connection
 		if err := db.PingContext(context.Background()); err != nil {
-			log.Printf("Database health check failed: %v", err)
+			log.Printf("[ERROR] Database health check failed: %v", err)
 			return c.SendStatus(fiber.StatusServiceUnavailable)
 		}
 
 		// Check Kafka connection
 		if err := checkKafkaConnection(kafkaWriter); err != nil {
-			log.Printf("Kafka health check failed: %v", err)
+			log.Printf("[ERROR] Kafka health check failed: %v", err)
 			return c.SendStatus(fiber.StatusServiceUnavailable)
 		}
 
+		log.Printf("[INFO] Health check passed")
 		return c.SendStatus(fiber.StatusOK)
 	})
 
@@ -113,7 +134,7 @@ func main() {
 }
 
 func indexHandler(c *fiber.Ctx, db *sql.DB, kafkaWriter *kafka.Writer) error {
-	log.Println("get")
+	log.Printf("[INFO] GET request from user: %s", c.Query("username"))
 	username := c.Query("username")
 
 	var item string
@@ -149,7 +170,7 @@ type todo struct {
 }
 
 func postHandler(c *fiber.Ctx, db *sql.DB, kafkaWriter *kafka.Writer) error {
-	log.Println("post")
+	log.Printf("[INFO] POST request received")
 
 	newTodo := todo{}
 	if err := c.BodyParser(&newTodo); err != nil {
