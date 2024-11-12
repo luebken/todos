@@ -1,8 +1,8 @@
 # TODOs
 
-A simple TODO demo app with two components: A web-app written in Golang and a database based on Postgres.
+A simple TODO web-app written in Golang with plain HTLM / Javascript frontend. And two backing services: A Kafka event stream and a database based on Postgres.
 
-The goal is to demonstrate multi-cloud scenarios where the web-app app and the database are deployed on different providers. 
+The goal is to demonstrate multi-cloud scenarios where the web-app app and the backing services are deployed on different providers. 
 
 
 ```mermaid
@@ -30,6 +30,7 @@ flowchart TD
 
 Prerequisite: A Kubernetes cluster. e.g. [emma's Managed Multi-Cloud Kubernetes](https://docs.emma.ms/project-services/managed-kubernetes-service/)
 
+Setup:
 ```sh
 # work in todos namespace
 kubectl create ns todos; kubectl config set-context --current --namespace=todos
@@ -39,21 +40,18 @@ kubectl apply -f k8s/postgres.yaml
 kubectl port-forward -n todos service/postgres 5432:5432
 psql -h localhost -U postgres todos
 # dummy data
-CREATE TABLE todos (
-    item TEXT PRIMARY KEY,
-    username TEXT
-);
+CREATE TABLE todos (item TEXT PRIMARY KEY, username TEXT);
 INSERT INTO todos (item, username) VALUES ('Buy groceries', 'Matthias'), ('Finish homework', 'Matthias'), ('Clean the house', 'Matthias');
 
 # setup a simple kafka
 kubectl apply -f k8s/kafka.yaml
 # create topic
-kubectl run kafka-client --rm -it --image=apache/kafka -- bash
-cd /opt/kafka/bin/
-./kafka-topics.sh --bootstrap-server kafka:9092 --create --topic todos-topic
+kubectl run kafka-client --rm -it --image=apache/kafka --command -- /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --topic todos-topic
+```
 
-# Build application. See Makefile.
-# Change the Docker user
+Application:
+```sh
+# Build application. See Makefile. Change the Docker user to your own.
 make push
 
 # start application
@@ -85,6 +83,8 @@ kubectl run psql-client --rm -it --image=postgres -- bash
 psql -h postgres -U postgres 
 
 # kafka
+kubectl run kafka-client --rm -it --image=apache/kafka -- bash
+cd /opt/kafka/bin/
 ./kafka-console-producer.sh --bootstrap-server kafka:9092 --topic todos-topic
 ./kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic todos-topic --from-beginning
 ```

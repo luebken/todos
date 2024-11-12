@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gofiber/template/html/v2"
 	"github.com/gofiber/websocket/v2"
 
-	"github.com/gofiber/template/html/v2"
 	"github.com/segmentio/kafka-go"
 
 	_ "github.com/lib/pq"
@@ -21,31 +21,27 @@ import (
 )
 
 func init() {
-	// Configure standard logger with timestamp and file info
+	// Standard logger with timestamp and file info
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
-// Add a helper function for Kafka connectivity check
-func checkKafkaConnection(writer *kafka.Writer) error {
-	// Try to write a test message
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	err := writer.WriteMessages(ctx, kafka.Message{
-		Key:   []byte("health-check"),
-		Value: []byte("ping"),
-	})
-	return err
-}
-
 func main() {
-	// Database
+	// Environment variables
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
 		log.Printf("[ERROR] Environment variable DATABASE_URL is not set")
 		os.Exit(1)
 	}
+	kafkaURL := os.Getenv("KAFKA_URL")
+	if kafkaURL == "" {
+		kafkaURL = "kafka:9092"
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
 
+	// Database connection
 	db, err := sql.Open("postgres", databaseUrl)
 	if err != nil {
 		log.Printf("[ERROR] Database connection failed: %v", err)
@@ -53,15 +49,15 @@ func main() {
 	}
 	defer db.Close()
 
-	// Kafka
+	// Kafka setup
 	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"kafka:9092"},
+		Brokers:  []string{kafkaURL},
 		Topic:    "todos-topic",
 		Balancer: &kafka.LeastBytes{},
 	})
-
 	defer kafkaWriter.Close()
 
+	// Fiber
 	engine := html.New("./views", ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
@@ -74,8 +70,7 @@ func main() {
 			return c.Status(code).JSON(err.Error())
 		},
 	})
-
-	// Add request logging middleware
+	// Request logging middleware
 	app.Use(func(c *fiber.Ctx) error {
 		start := time.Now()
 		err := c.Next()
@@ -96,18 +91,14 @@ func main() {
 		return c.SendStatus(fiber.StatusOK)
 	})
 	app.Get("/health/ready", func(c *fiber.Ctx) error {
-		// Check database connection
 		if err := db.PingContext(context.Background()); err != nil {
 			log.Printf("[ERROR] Database health check failed: %v", err)
 			return c.SendStatus(fiber.StatusServiceUnavailable)
 		}
-
-		// Check Kafka connection
 		if err := checkKafkaConnection(kafkaWriter); err != nil {
 			log.Printf("[ERROR] Kafka health check failed: %v", err)
 			return c.SendStatus(fiber.StatusServiceUnavailable)
 		}
-
 		log.Printf("[INFO] Health check passed")
 		return c.SendStatus(fiber.StatusOK)
 	})
@@ -137,12 +128,9 @@ func main() {
 	app.Get("/logs", func(c *fiber.Ctx) error {
 		return logsHandler(c)
 	})
-	app.Get("/ws/logs", websocket.New(logsWebSocketHandler))
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
+	app.Get("/ws/logs", websocket.New(func(c *websocket.Conn) {
+		logsWebSocketHandler(c, kafkaURL)
+	}))
 
 	// Create channel for shutdown signals
 	quit := make(chan os.Signal, 1)
@@ -288,10 +276,9 @@ func logsHandler(c *fiber.Ctx) error {
 }
 
 // handleLogsWebSocket handles the WebSocket connection for streaming logs
-func logsWebSocketHandler(c *websocket.Conn) {
-	// Create reader with latest offset
+func logsWebSocketHandler(c *websocket.Conn, kafkaURL string) {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"kafka:9092"},
+		Brokers: []string{kafkaURL},
 		Topic:   "todos-topic",
 		GroupID: "log-consumer-group",
 	})
@@ -312,4 +299,17 @@ func logsWebSocketHandler(c *websocket.Conn) {
 			break
 		}
 	}
+}
+
+// Helper function for Kafka connectivity check
+func checkKafkaConnection(writer *kafka.Writer) error {
+	// Try to write a test message
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := writer.WriteMessages(ctx, kafka.Message{
+		Key:   []byte("health-check"),
+		Value: []byte("ping"),
+	})
+	return err
 }
