@@ -1,0 +1,13 @@
+[Unit]
+Description=TODOs Application
+After=network.target
+
+[Service]
+ExecStart=podman run -p 8000:3000 -e DATABASE_URL=XXX docker.io/luebken/todos
+WorkingDirectory=/home/ubuntu
+Restart=always
+User=ubuntu
+Group=ubuntu
+
+[Install]
+WantedBy=multi-user.target
