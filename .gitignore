@@ -1,2 +1,5 @@
 .envrc
+.terraform/
+.terraform.lock.hcl
+*tfstate*
 prod-app-k8s-environment.cfg

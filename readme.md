@@ -1,8 +1,6 @@
 # TODOs
 
-A simple TODO web-app written in Golang with plain HTLM / Javascript frontend. And two backing services: A Kafka event stream and a database based on Postgres.
-
-The goal is to demonstrate multi-cloud scenarios where the web-app app and the backing services are deployed on different providers. 
+A simple TODO web-app written in Golang with plain HTLM / Javascript frontend and two backing services: A Kafka event stream and a database based on Postgres. The goal is to demonstrate multi-cloud scenarios where the web-app app and the backing services are deployed on different providers. 
 
 
 ```mermaid
@@ -12,15 +10,17 @@ flowchart TD
     TODOs --- Kafka[(Kafka)]
     subgraph Services
         Postgres --> K8s2[K8s]
-        Postgres --> Cloud[Cloud<br>AWS/Azure/GCP]
+        Postgres --> SaaS
         Kafka --> K8s2[K8s]
-        Kafka --> Cloud[Cloud<br>AWS/Azure/GCP]
+        Kafka --> SaaS 
+        K8s2 --> Cloud[Cloud<br>AWS/Azure/GCP]
+        SaaS --> Cloud[Cloud<br>AWS/Azure/GCP]
     end
     subgraph WebApp
-        Golang --> K8s
-        K8s --> AWS 
-        K8s --> Azure 
-        K8s --> GCP    
+        Golang(Container/Golang) --> K8s
+        Golang(Container/Golang) --> VMs
+        K8s --> Cloud2[Cloud<br>AWS/Azure/GCP]
+        VMs --> Cloud2[Cloud<br>AWS/Azure/GCP]
     end
 ```
 
