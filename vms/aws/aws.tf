@@ -1,5 +1,13 @@
+locals {
+  region              = "eu-central-1"
+  availability_zone_a = "eu-central-1a"
+
+  ami = "ami-0084a47cc718c111a" # Ubuntu Server 24.04 user:'ubuntu'
+  instance_type = "t2.micro"
+  key_name      = "id_rsa_dev"
+}
 provider "aws" {
-  region = "eu-central-1"
+  region = local.region
 }
 
 # Main VPC
@@ -21,7 +29,7 @@ resource "aws_subnet" "web_subnet" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone       = "eu-central-1a"
+  availability_zone       = local.availability_zone_a
 }
 resource "aws_route_table" "web_subnet_rt" {
   tags   = { Name = "web_subnet_rt" }
@@ -41,18 +49,18 @@ resource "aws_route_table_association" "web_subnet_association" {
 # 
 resource "aws_instance" "webapp_vm_1" {
   tags          = { Name = "webapp_vm_1" }
-  ami           = "ami-0084a47cc718c111a" # Ubuntu Server 24.04 user:'ubuntu'
-  instance_type = "t2.micro"
-  key_name      = "id_rsa_dev"
+  ami           = local.ami
+  instance_type = local.instance_type
+  key_name      = local.key_name
   subnet_id     = aws_subnet.web_subnet.id
 
   vpc_security_group_ids = [aws_security_group.webapp_vm_sg.id]
 }
 resource "aws_instance" "webapp_vm_2" {
   tags          = { Name = "webapp_vm_2" }
-  ami           = "ami-0084a47cc718c111a"
-  instance_type = "t2.micro"
-  key_name      = "id_rsa_dev"
+  ami           = local.ami
+  instance_type = local.instance_type
+  key_name      = local.key_name
   subnet_id     = aws_subnet.web_subnet.id
 
   vpc_security_group_ids = [aws_security_group.webapp_vm_sg.id]
@@ -101,7 +109,7 @@ resource "aws_subnet" "data_subnet" {
   tags                    = { Name = "data_subnet" }
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.2.0/24"
-  availability_zone       = "eu-central-1a"
+  availability_zone       = local.availability_zone_a
   map_public_ip_on_launch = false # !!!
 }
 resource "aws_route_table" "data_subnet_rt" {
@@ -133,18 +141,18 @@ resource "aws_nat_gateway" "nat" {
 #
 resource "aws_instance" "data_vm_1" {
   tags          = { Name = "data_vm_1" }
-  ami           = "ami-0084a47cc718c111a"
-  instance_type = "t2.micro"
-  key_name      = "id_rsa_dev"
+  ami           = local.ami
+  instance_type = local.instance_type
+  key_name      = local.key_name
   subnet_id     = aws_subnet.data_subnet.id
 
   vpc_security_group_ids = [aws_security_group.data_vm_sg.id]
 }
 resource "aws_instance" "data_vm_2" {
   tags          = { Name = "data_vm_2" }
-  ami           = "ami-0084a47cc718c111a"
-  instance_type = "t2.micro"
-  key_name      = "id_rsa_dev"
+  ami           = local.ami
+  instance_type = local.instance_type
+  key_name      = local.key_name
   subnet_id     = aws_subnet.data_subnet.id
 
   vpc_security_group_ids = [aws_security_group.data_vm_sg.id]
