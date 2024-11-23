@@ -130,7 +130,7 @@ resource "aws_route_table_association" "data_subnet_association" {
 # Enable resources in the private subnet to access the internet.
 # Create an Elastic IP for the NAT Gateway
 resource "aws_eip" "nat_eip" {
-  vpc = true
+  domain = "vpc"
 }
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat_eip.id
