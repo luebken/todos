@@ -53,7 +53,7 @@ resource "aws_instance" "webapp_vm_1" {
   instance_type = local.instance_type
   key_name      = local.key_name
   subnet_id     = aws_subnet.web_subnet.id
-
+  user_data     =  "${file("init-webapp-vm.yaml")}"
   vpc_security_group_ids = [aws_security_group.webapp_vm_sg.id]
 }
 resource "aws_instance" "webapp_vm_2" {
@@ -62,7 +62,7 @@ resource "aws_instance" "webapp_vm_2" {
   instance_type = local.instance_type
   key_name      = local.key_name
   subnet_id     = aws_subnet.web_subnet.id
-
+  user_data     =  "${file("init-webapp-vm.yaml")}"
   vpc_security_group_ids = [aws_security_group.webapp_vm_sg.id]
 }
 resource "aws_security_group" "webapp_vm_sg" {
@@ -145,6 +145,7 @@ resource "aws_instance" "data_vm_1" {
   instance_type = local.instance_type
   key_name      = local.key_name
   subnet_id     = aws_subnet.data_subnet.id
+  user_data     =  "${file("init-data-vm.yaml")}"
 
   vpc_security_group_ids = [aws_security_group.data_vm_sg.id]
 }
@@ -154,7 +155,7 @@ resource "aws_instance" "data_vm_2" {
   instance_type = local.instance_type
   key_name      = local.key_name
   subnet_id     = aws_subnet.data_subnet.id
-
+  user_data     =  "${file("init-data-vm.yaml")}"
   vpc_security_group_ids = [aws_security_group.data_vm_sg.id]
 }
 

@@ -31,9 +31,14 @@ aws ec2 describe-subnets --filters "Name=tag:Name,Values=web_subnet,data_subnet"
 aws ec2 describe-instances --filters "Name=tag:Name,Values=webapp_vm_1,webapp_vm_2,data_vm_1,data_vm_2" | jq '.Reservations[].Instances[0].InstanceId'
 
 # Access to web VMs
-PUBLIC_IP1=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=webapp_vm_1" | jq -r '.Reservations[0].Instances[0].PublicIpAddress')
-echo $PUBLIC_IP1
+aws ec2 describe-instances --filters "Name=tag:Name,Values=webapp_vm_1,webapp_vm_2" | jq -r '.Reservations[].Instances[].PublicIpAddress'
+PUBLIC_IP1=
 ssh -i ~/.ssh/id_rsa_dev ubuntu@$PUBLIC_IP1
+
+# Check if VM came up
+cat /var/log/cloud-init-output.log
+# TODO replace with TODOs
+systemctl status podman
 
 # Access to data VMs
 # We use the first WebVM as a bastion host
