@@ -4,11 +4,25 @@ locals {
 
   ami = "ami-0084a47cc718c111a" # Ubuntu Server 24.04 user:'ubuntu'
   instance_type = "t2.micro"
-  key_name      = "id_rsa_dev"
+  key_name      = "id_rsa_todos"
 }
 provider "aws" {
   region = local.region
 }
+# SSH Key
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+resource "aws_key_pair" "key_pair" {
+  key_name   = local.key_name
+  public_key = tls_private_key.ssh_key.public_key_openssh
+}
+resource "local_file" "private_key" {
+  content  = tls_private_key.ssh_key.private_key_pem
+  filename = "${path.module}/id_rsa_todos.pem"
+}
+
 
 # Main VPC
 #
