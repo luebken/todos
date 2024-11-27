@@ -90,19 +90,25 @@ sudo systemctl status todos
 sudo journalctl -u todos.service
 sudo systemctl daemon-reload
 sudo systemctl stop todos
+```
 
 
+## Configure Database
+
+```sh
 # Access to data VMs
 # We use the first WebVM as a bastion host
-DATA_PRIVATE_IP1=$(tofu show --json | jq -r '.values.root_module.resources[] | select(.address=="aws_instance.data_vm_1").values.private_ip')
+PRIVATE_DATA_IP1=$(tofu show --json | jq -r '.values.root_module.resources[] | select(.address=="aws_instance.data_vm_1").values.private_ip')
 # memorize the private IP
-echo $DATA_PRIVATE_IP1
-# copy scp key to bastion host
-scp -i ~/.ssh/id_rsa_dev ~/.ssh/id_rsa_dev ubuntu@$PUBLIC_IP1:/home/ubuntu
-ssh -i ~/.ssh/id_rsa_dev ubuntu@$PUBLIC_IP1
+echo $PRIVATE_DATA_IP1 > PRIVATE_DATA_IP1.txt
+# copy private key to bastion host
+scp -i id_rsa_todos.pem PRIVATE_DATA_IP1.txt id_rsa_todos.pem ubuntu@$PUBLIC_IP_APP_1:/home/ubuntu
 # on the bastion host
-ssh -i id_rsa_dev ubuntu@$DATA_PRIVATE_IP1
-# TODO check  Port Forwarding via SSH Tunnel
+export PRIVATE_DATA_IP1=$(cat PRIVATE_DATA_IP1.txt)
+ssh -i id_rsa_todos.pem ubuntu@$PRIVATE_DATA_IP1
 
+# Check if service came up
+cat /var/log/cloud-init-output.log
+systemctl status postgresql
 ```
 See also https://dev.to/gdenn/aws-best-practices-three-tier-vpc-37n0
