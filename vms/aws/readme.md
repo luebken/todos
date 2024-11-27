@@ -60,17 +60,41 @@ aws ec2 describe-subnets --filters "Name=tag:Name,Values=web_subnet,data_subnet"
 aws ec2 describe-instances --filters "Name=tag:Name,Values=webapp_vm_1,webapp_vm_2,data_vm_1,data_vm_2" | jq '.Reservations[].Instances[0].InstanceId'
 ```
 
-## Configure
+## Configure App
 
 ```sh
-# Check if servce came up
-# TODO replace with TODOs
-systemctl status podman
+# Check if service came up
+systemctl status docker
 cat /var/log/cloud-init-output.log
+
+# Save the app image
+docker save luebken/todos -o todos.save
+# Configure serivce
+sed -i '' 's/{DATABASE_URL}/'"$DATA_PRIVATE_IP1"'/g' ../todos.service
+ # Upload app image & service
+scp -i id_rsa_todos.pem ../todos.service todos.save ubuntu@$PUBLIC_IP_APP_1:/home/ubuntu
+
+ssh -i id_rsa_todos.pem ubuntu@$PUBLIC_IP_APP_1
+# load image
+sudo docker load --input todos.save
+
+# Setup and start the service
+# sudo chown root:root todos.service
+sudo mv todos.service /etc/systemd/system/
+
+sudo systemctl enable todos
+sudo systemctl start todos
+sudo systemctl status todos
+
+# Troubleshooting
+sudo journalctl -u todos.service
+sudo systemctl daemon-reload
+sudo systemctl stop todos
+
 
 # Access to data VMs
 # We use the first WebVM as a bastion host
-DATA_PRIVATE_IP1=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=data_vm_1" | jq -r '.Reservations[0].Instances[0].PrivateIpAddress')
+DATA_PRIVATE_IP1=$(tofu show --json | jq -r '.values.root_module.resources[] | select(.address=="aws_instance.data_vm_1").values.private_ip')
 # memorize the private IP
 echo $DATA_PRIVATE_IP1
 # copy scp key to bastion host

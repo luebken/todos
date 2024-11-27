@@ -1,13 +1,13 @@
 [Unit]
-Description=TODOs Application
+Description=TODOs App
 After=network.target
 
 [Service]
-ExecStart=podman run -p 8000:3000 -e DATABASE_URL={DATABASE_URL} docker.io/luebken/todos
-WorkingDirectory=/home/ubuntu
+ExecStart=/usr/bin/docker run --name todos -p 8000:3000 -e DATABASE_URL={DATABASE_URL} docker.io/luebken/todos
+ExecStop=/usr/bin/docker stop todos
 Restart=always
-User=ubuntu
-Group=ubuntu
+RestartSec=5
+KillMode=control-group
 
 [Install]
 WantedBy=multi-user.target
