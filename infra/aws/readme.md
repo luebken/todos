@@ -9,7 +9,7 @@ tofu init
 tofu plan
 tofu apply
 
-chmod 600 id_rsa_todos.pems
+chmod 600 id_rsa_todos.pem
 ```
 
 ## SSH Access
