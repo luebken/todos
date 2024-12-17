@@ -1,6 +1,5 @@
 # Setting up VMs with AWS
 
-
 ## Create Infra
 ```sh
 # Configure & Test AWS access
