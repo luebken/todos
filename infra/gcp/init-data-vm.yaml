@@ -1,0 +1,13 @@
+#cloud-config
+repo_update: true
+repo_upgrade: all
+
+packages:
+- postgresql
+
+runcmd:
+  - sudo -u postgres psql -c 'create database todos;'
+  - sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+  - sudo -u postgres psql todos -c "CREATE TABLE todos (item TEXT PRIMARY KEY, username TEXT);"
+  - sudo -u postgres psql todos -c "INSERT INTO todos (item, username) VALUES ('Buy groceries', 'Matthias'), ('Finish homework', 'Matthias'), ('Clean the house', 'Matthias');"
+  - sudo -u postgres psql todos -c 'select * from todos;'
