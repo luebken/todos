@@ -69,7 +69,7 @@ open <hostname>
 
 ```sh
 # watch
-watch --color kubecolor get pods -o wide -n todos  --force-colors
+watch -n 1 --color kubecolor get pods -o wide -n todos  --force-colors
 
 # logs
 kubectl logs -f -l app=todos -n todos --all-containers=true
