@@ -1,3 +1,6 @@
+default:
+	cat Makefile
+
 dev:
 	go run cmd/todos/server.go
 
@@ -13,3 +16,9 @@ push: build
 
 run-postgres:
 	docker run -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword postgres
+
+watch:
+	watch -n 1 --color kubecolor get pods -o wide -n todos  --force-colors
+
+edit: 
+	kubectl edit deploy todos
